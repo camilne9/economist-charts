@@ -1,0 +1,50 @@
+---
+title: "Brexit Approval"
+author: "Christopher Milne"
+date: "4/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readr)
+library(lubridate)
+library(janitor)
+library(ggthemes)
+
+
+brexit <- read_csv("http://infographics.economist.com/databank/Economist_brexit.csv", 
+                 skip = 3, 
+                 col_types = cols(
+                   Date = col_character(),
+                   `% responding right` = col_double(),
+                   `% responding wrong` = col_double()
+                 )) %>% 
+  clean_names()
+```
+
+```{r echo = FALSE}
+brexit <- brexit %>% 
+  mutate(date = as.Date(date, "%d/%m/%y")) %>% 
+  mutate(year = year(date)) %>% 
+  gather(key = Response, value = percentages, percent_responding_right, percent_responding_wrong) %>%
+  mutate(Response = recode(Response, "percent_responding_right" = "Right",
+                           "percent_responding_wrong" = "Wrong"))
+  
+
+brexit %>% 
+  ggplot(aes(x = date, y = percentages, color = Response)) +
+  geom_jitter(show.legend = FALSE, alpha = .5)+
+  geom_smooth(method = 'loess', se = FALSE)+
+  expand_limits(y =38)+
+  theme_economist_white()+
+  theme(legend.position = "right")+
+  labs(title = "Bremorse",
+       x = "",
+       y = "% Responding",
+       subtitle = '"In hindsight, do you think Britain was right or wrong to vote to leave the EU?',
+       caption = "Source: NatCen Social Research")+
+  scale_color_manual(values = c("blue", "red"))
+```
+
